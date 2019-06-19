@@ -26,15 +26,24 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import { Type, Template, Variance } from './types';
+const { Type, Template } = require('./types.js');
 
-const funcTmpl = new Template("Function", [
-	{ name: "A", variance: Variance.Contra },
-	{ name: "R", variance: Variance.Co },
+const arrowCtor = new Template("function", [
+	{ name: "A", variance: 'contra' },
+	{ name: "R", variance: 'co' },
 ]);
 
-const numberType = new Type("number");
-const stringType = new Type("string");
-const toStringType = new Type(funcTmpl, [ numberType, stringType ])
+const anyType = Type.bespoke('any');
+const floatType = Type.bespoke('float', anyType);
+const intType = Type.bespoke('int', floatType);
+const stringType = Type.bespoke('string', anyType);
+const floatEater = arrowCtor.toType([ floatType, stringType ]);
+const intEater = arrowCtor.toType([ intType, stringType ]);
 
-console.log(stringType.worksAs(numberType));
+console.log("float = int OK:", intType.actsAs(floatType));
+console.log("int = float OK:", floatType.actsAs(intType));
+console.log("any = string OK:", stringType.actsAs(anyType));
+console.log("string = any OK:", anyType.actsAs(stringType));
+console.log("floatFunc = intFunc OK:", intEater.actsAs(floatEater));
+console.log("intFunc = floatFunc OK:", floatEater.actsAs(intEater));
+console.log("any = intFunc OK:", intEater.actsAs(anyType));

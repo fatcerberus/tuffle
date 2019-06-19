@@ -2,7 +2,7 @@
   "name": "tuffle",
   "version": "0.1.0",
   "description": "The Tuffle programming language",
-  "main": "index.js",
+  "main": "src/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,8 +11,5 @@
     "language"
   ],
   "author": "Fat Cerberus",
-  "license": "BSD-2-Clause",
-  "devDependencies": {
-    "typescript": "^3.5.2"
-  }
+  "license": "BSD-2-Clause"
 }

@@ -26,83 +26,54 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-export
-enum Variance
-{
-	None,
-	Co,
-	Contra,
-	Both,
-}
-
-interface TypeVar
-{
-	name: string;
-	variance: Variance;
-}
-
-export
 class Template
 {
-	name: string;
-	vars: TypeVar[];
-
-	constructor(name: string, vars: TypeVar[] = [])
+	constructor(name, vars = [])
 	{
 		this.name = name;
 		this.vars = vars;
 	}
+
+	toType(typeArgs)
+	{
+        return new Type(this, null, typeArgs);
+	}
 }
 
-export
 class Type
 {
-	name: string;
-	template: Template;
-	baseType: Type | null = null;
-	args: Type[] = [];
-
-	constructor(template: Template, args?: Type[])
-	constructor(name: string)
-	constructor(basis: Template | string, args: Type[] = [])
+	static bespoke(name, baseType = null)
 	{
-		this.template = basis instanceof Template
-			? basis : new Template(basis);
+        const template = new Template(name);
+        return new Type(template, baseType);
+	}
+
+	constructor(template, baseType, typeArgs = [])
+	{
+		this.template = template;
+		this.baseType = baseType;
+		this.args = [ ...typeArgs ];
+
 		this.name = `${this.template.name}`;
-		if (args.length > 0) {
-			this.name += "<";
-			for (let i = 0; i < args.length; ++i) {
-				this.name += args[i].name;
-				if (i + 1 < args.length)
-					this.name += ", ";
+		if (this.args.length > 0) {
+			this.name += "[";
+			for (let i = 0, len = this.args.length; i < len; ++i) {
+				this.name += this.args[i].name;
+				if (i + 1 < len)
+					this.name += ",";
 			}
-			this.name += ">";
+			this.name += "]";
 		}
+
+		console.log(this.toString());
 	}
 
 	toString()
 	{
-		return `type '${this.name}'`;
+        return `type '${this.name}'`;
 	}
 
-	equals(other: Type)
-	{
-		if (this.template === other.template) {
-			// types have the same template; check if arguments match
-			for (let i = 0; i < this.args.length; ++i) {
-				const typeA = this.args[i];
-				const typeB = other.args[i];
-				if (!typeA.equals(typeB))
-					return false;
-			}
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	worksAs(checkType: Type): boolean
+	actsAs(checkType)
 	{
 		if (checkType.template === this.template) {
 			// types have the same template; check if arguments are compatible
@@ -111,20 +82,20 @@ class Type
 				const sourceArg = this.args[i];
 				const targetArg = checkType.args[i];
 				switch (variance) {
-					case Variance.None:
+					case 'none':
 						if (!targetArg.equals(sourceArg))
 							return false;
 						break;
-					case Variance.Co:
-						if (!sourceArg.worksAs(targetArg))
+					case 'co':
+						if (!sourceArg.actsAs(targetArg))
 							return false;
 						break;
-					case Variance.Contra:
-						if (!targetArg.worksAs(sourceArg))
+					case 'contra':
+						if (!targetArg.actsAs(sourceArg))
 							return false;
 						break;
-					case Variance.Both:
-						if (!sourceArg.worksAs(targetArg) && !targetArg.worksAs(sourceArg))
+					case 'both':
+						if (!sourceArg.actsAs(targetArg) && !targetArg.actsAs(sourceArg))
 							return false;
 						break;
 				}
@@ -133,11 +104,32 @@ class Type
 		}
 		else if (this.baseType !== null) {
 			// check if we inherit from something compatible
-			return this.baseType.worksAs(checkType);
+			return this.baseType.actsAs(checkType);
 		}
-		else {
-			// guess the types aren't compatible after all
-			return false;
+
+        // guess the types aren't compatible after all
+        return false;
+	}
+
+	equals(checkType)
+	{
+		if (this.template === checkType.template) {
+			// types have the same template; check if arguments match
+			for (let i = 0; i < this.args.length; ++i) {
+				const typeA = this.args[i];
+				const typeB = checkType.args[i];
+				if (!typeA.equals(typeB))
+					return false;
+			}
+			return true;
 		}
+		return false;
 	}
 }
+
+// CommonJS export table
+module.exports =
+{
+    Template,
+    Type,
+};
