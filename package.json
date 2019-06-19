@@ -1,0 +1,18 @@
+{
+  "name": "tuffle",
+  "version": "0.1.0",
+  "description": "The Tuffle programming language",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "tuffle",
+    "language"
+  ],
+  "author": "Fat Cerberus",
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "typescript": "^3.5.2"
+  }
+}
