@@ -37,4 +37,4 @@ const numberType = new Type("number");
 const stringType = new Type("string");
 const toStringType = new Type(funcTmpl, [ numberType, stringType ])
 
-console.log(stringType.actsAs(numberType));
+console.log(stringType.worksAs(numberType));

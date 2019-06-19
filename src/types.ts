@@ -59,6 +59,7 @@ class Type
 {
 	name: string;
 	template: Template;
+	baseType: Type | null = null;
 	args: Type[] = [];
 
 	constructor(template: Template, args?: Type[])
@@ -84,41 +85,6 @@ class Type
 		return `type '${this.name}'`;
 	}
 
-	actsAs(targetType: Type)
-	{
-		if (targetType.template === this.template) {
-			// types have the same template; check if arguments are compatible
-			for (let i = 0; i < this.template.vars.length; ++i) {
-				const variance = this.template.vars[i].variance;
-				const sourceArg = this.args[i];
-				const targetArg = targetType.args[i];
-				switch (variance) {
-					case Variance.None:
-						if (!targetArg.equals(sourceArg))
-							return false;
-						break;
-					case Variance.Co:
-						if (!sourceArg.actsAs(targetArg))
-							return false;
-						break;
-					case Variance.Contra:
-						if (!targetArg.actsAs(sourceArg))
-							return false;
-						break;
-					case Variance.Both:
-						if (!sourceArg.actsAs(targetArg) && !targetArg.actsAs(sourceArg))
-							return false;
-						break;
-				}
-			}
-			return true;
-		}
-		else {
-			// guess they're not compatible after all
-			return false;
-		}
-	}
-
 	equals(other: Type)
 	{
 		if (this.template === other.template) {
@@ -132,6 +98,45 @@ class Type
 			return true;
 		}
 		else {
+			return false;
+		}
+	}
+
+	worksAs(checkType: Type): boolean
+	{
+		if (checkType.template === this.template) {
+			// types have the same template; check if arguments are compatible
+			for (let i = 0; i < this.template.vars.length; ++i) {
+				const variance = this.template.vars[i].variance;
+				const sourceArg = this.args[i];
+				const targetArg = checkType.args[i];
+				switch (variance) {
+					case Variance.None:
+						if (!targetArg.equals(sourceArg))
+							return false;
+						break;
+					case Variance.Co:
+						if (!sourceArg.worksAs(targetArg))
+							return false;
+						break;
+					case Variance.Contra:
+						if (!targetArg.worksAs(sourceArg))
+							return false;
+						break;
+					case Variance.Both:
+						if (!sourceArg.worksAs(targetArg) && !targetArg.worksAs(sourceArg))
+							return false;
+						break;
+				}
+			}
+			return true;
+		}
+		else if (this.baseType !== null) {
+			// check if we inherit from something compatible
+			return this.baseType.worksAs(checkType);
+		}
+		else {
+			// guess the types aren't compatible after all
 			return false;
 		}
 	}
