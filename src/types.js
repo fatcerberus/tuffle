@@ -26,62 +26,31 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-class Template
-{
-	constructor(name, vars = [])
-	{
-		this.name = name;
-		this.vars = vars;
-	}
-
-	toType(typeArgs)
-	{
-        return new Type(this, null, typeArgs);
-	}
-}
-
 class Type
 {
-	static bespoke(name, baseType = null)
+	constructor(name, baseType = null, typeVars = [])
 	{
-        const template = new Template(name);
-        return new Type(template, baseType);
-	}
-
-	constructor(template, baseType, typeArgs = [])
-	{
-		this.template = template;
+		this.name = name;
 		this.baseType = baseType;
-		this.args = [ ...typeArgs ];
-
-		this.name = `${this.template.name}`;
-		if (this.args.length > 0) {
-			this.name += "[";
-			for (let i = 0, len = this.args.length; i < len; ++i) {
-				this.name += this.args[i].name;
-				if (i + 1 < len)
-					this.name += ",";
-			}
-			this.name += "]";
-		}
+		this.vars = [ ...typeVars ];
+		this.args = [];
 
 		console.log(this.toString());
 	}
 
 	toString()
 	{
-        return `type '${this.name}'`;
+		return `type '${this.name}'`;
 	}
 
 	actsAs(checkType)
 	{
-		if (checkType.template === this.template) {
+		if (checkType.name === this.name) {
 			// types have the same template; check if arguments are compatible
-			for (let i = 0; i < this.template.vars.length; ++i) {
-				const variance = this.template.vars[i].variance;
+			for (let i = 0; i < this.vars.length; ++i) {
 				const sourceArg = this.args[i];
 				const targetArg = checkType.args[i];
-				switch (variance) {
+				switch (this.vars[i].variance) {
 					case 'none':
 						if (!targetArg.equals(sourceArg))
 							return false;
@@ -107,14 +76,14 @@ class Type
 			return this.baseType.actsAs(checkType);
 		}
 
-        // guess the types aren't compatible after all
-        return false;
+		// guess the types aren't compatible after all
+		return false;
 	}
 
 	equals(checkType)
 	{
-		if (this.template === checkType.template) {
-			// types have the same template; check if arguments match
+		if (this.name === checkType.name) {
+			// types have the same name; check if arguments match
 			for (let i = 0; i < this.args.length; ++i) {
 				const typeA = this.args[i];
 				const typeB = checkType.args[i];
@@ -125,11 +94,17 @@ class Type
 		}
 		return false;
 	}
+
+	instantiate(typeArgs)
+	{
+		const newType = new Type(this.name, this.baseType, this.vars);
+		newType.args = [ ...typeArgs ];
+		return newType;
+	}
 }
 
 // CommonJS export table
 module.exports =
 {
-    Template,
-    Type,
+	Type,
 };

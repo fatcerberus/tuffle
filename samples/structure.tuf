@@ -1,0 +1,16 @@
+/**
+ *  'structure' is just like 'struct' in other C-like languages.  it consists of one
+ *  or more named members, each carrying data of a specified type.  like unions,
+ *  structs are passed by value.
+**/
+
+value PetType = dog | cat | pig  // that last one will probably eat you.
+
+structure Farm
+{
+	family: Tree<Person>;
+	numHogs: int;
+	numCows: int;
+	numChickens: int;
+	pet: PetType;
+}

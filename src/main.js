@@ -26,24 +26,23 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const { Type, Template } = require('./types.js');
+const { Type } = require('./types.js');
 
-const arrowCtor = new Template("function", [
-	{ name: "A", variance: 'contra' },
+const anyType = new Type("any");
+const functionType = new Type("function", anyType, [
+	{ name: "T", variance: 'contra' },
 	{ name: "R", variance: 'co' },
 ]);
+const realType = new Type("real", anyType);
+const intType = new Type("int", realType);
+const stringType = new Type("string", anyType);
+const realEater = functionType.instantiate([ realType, stringType ]);
+const intEater = functionType.instantiate([ intType, stringType ]);
 
-const anyType = Type.bespoke('any');
-const floatType = Type.bespoke('float', anyType);
-const intType = Type.bespoke('int', floatType);
-const stringType = Type.bespoke('string', anyType);
-const floatEater = arrowCtor.toType([ floatType, stringType ]);
-const intEater = arrowCtor.toType([ intType, stringType ]);
-
-console.log("float = int OK:", intType.actsAs(floatType));
-console.log("int = float OK:", floatType.actsAs(intType));
+console.log("real = int OK:", intType.actsAs(realType));
+console.log("int = real OK:", realType.actsAs(intType));
 console.log("any = string OK:", stringType.actsAs(anyType));
 console.log("string = any OK:", anyType.actsAs(stringType));
-console.log("floatFunc = intFunc OK:", intEater.actsAs(floatEater));
-console.log("intFunc = floatFunc OK:", floatEater.actsAs(intEater));
+console.log("realFunc = intFunc OK:", intEater.actsAs(realEater));
+console.log("intFunc = realFunc OK:", realEater.actsAs(intEater));
 console.log("any = intFunc OK:", intEater.actsAs(anyType));

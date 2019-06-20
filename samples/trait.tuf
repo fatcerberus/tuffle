@@ -1,0 +1,22 @@
+// 'this' accepts optional type parameters, up to the number included in the
+// trait definition.  the trait's type parameters unify with the implementing
+// type, so we can say that some generic type expressing the Functor trait
+// "is a Functor in T".
+trait Functor<T>
+{
+	map<R>(T => R): this<R>
+}
+
+// `implies` indicates that the trait implies other traits.  the implied traits
+// will be treated as though they were part of the definition of the expressing
+// type.
+trait Monad<T> implies Functor<T>
+{
+	chain<R>(T => this<R>): this<R>
+}
+
+// traits don't have to be polymorphic.
+trait Show
+{
+	toString(): string
+}
