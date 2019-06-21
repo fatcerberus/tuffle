@@ -33,7 +33,7 @@ class Type
 		this.name = name;
 		this.baseType = baseType;
 		this.vars = [ ...typeVars ];
-		this.args = [];
+		this.args = this.vars.map(() => null);
 
 		console.log(this.toString());
 	}
@@ -43,13 +43,22 @@ class Type
 		return `type '${this.name}'`;
 	}
 
-	actsAs(checkType)
+	actsAs(targetType)
 	{
-		if (checkType.name === this.name) {
-			// types have the same template; check if arguments are compatible
+		if (targetType.name === this.name) {
+			// types have the same type constructor; check if typeargs are compatible
 			for (let i = 0; i < this.vars.length; ++i) {
 				const sourceArg = this.args[i];
-				const targetArg = checkType.args[i];
+				const targetArg = targetType.args[i];
+
+				// '<*>' as source is always compatible
+				if (sourceArg === null)
+					continue;
+
+				// note: '<*> = <*>' handled by above clause
+				if (targetArg === null)
+					return false;
+
 				switch (this.vars[i].variance) {
 					case 'none':
 						if (!targetArg.equals(sourceArg))
@@ -63,17 +72,13 @@ class Type
 						if (!targetArg.actsAs(sourceArg))
 							return false;
 						break;
-					case 'both':
-						if (!sourceArg.actsAs(targetArg) && !targetArg.actsAs(sourceArg))
-							return false;
-						break;
 				}
 			}
 			return true;
 		}
 		else if (this.baseType !== null) {
 			// check if we inherit from something compatible
-			return this.baseType.actsAs(checkType);
+			return this.baseType.actsAs(targetType);
 		}
 
 		// guess the types aren't compatible after all
