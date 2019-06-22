@@ -1,0 +1,10 @@
+{
+	"compileOnSave": true,
+	"compilerOptions": {
+		"target": "es2015",
+		"module": "commonjs",
+		"lib": [ "es2015" ],
+		"outDir": "dist",
+		"strict": true,
+	}
+}

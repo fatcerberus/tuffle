@@ -26,31 +26,4 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const { Type } = require('./types.js');
-
-const anyType = new Type("any");
-const functionType = new Type("function", anyType, [
-	{ name: "T", variance: 'contra' },
-	{ name: "R", variance: 'co' },
-]);
-const maybeType = new Type("Maybe", anyType, [
-	{ name: "T", variance: 'co' },
-]);
-const floatType = new Type("float", anyType);
-const intType = new Type("int", floatType);
-const stringType = new Type("string", anyType);
-const realEater = functionType.instantiate([ floatType, stringType ]);
-const intEater = functionType.instantiate([ intType, stringType ]);
-const maybeString = maybeType.instantiate([ stringType ]);
-
-console.log("float = int OK:", intType.actsAs(floatType));
-console.log("int = float OK:", floatType.actsAs(intType));
-console.log("any = string OK:", stringType.actsAs(anyType));
-console.log("string = any OK:", anyType.actsAs(stringType));
-console.log("realFunc = intFunc OK:", intEater.actsAs(realEater));
-console.log("intFunc = realFunc OK:", realEater.actsAs(intEater));
-console.log("any = intFunc OK:", intEater.actsAs(anyType));
-console.log("maybeString = Maybe<*> OK:", maybeType.actsAs(maybeString));
-console.log("Maybe<*> = maybeString OK:", maybeString.actsAs(maybeType));
-console.log("any = maybeString OK:", maybeString.actsAs(anyType));
-console.log("any = Maybe<*> OK:", maybeType.actsAs(anyType));
+import { Type, typeCheck } from './types';
