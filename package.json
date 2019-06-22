@@ -13,6 +13,7 @@
   "author": "Fat Cerberus",
   "license": "BSD-2-Clause",
   "devDependencies": {
+    "@types/node": "^12.0.10",
     "typescript": "^3.5.2"
   }
 }

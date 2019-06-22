@@ -27,3 +27,13 @@
 **/
 
 import { Type, typeCheck } from './types';
+
+const any = Type("any");
+const string = Type("string", any);
+const float = Type("float", any);
+const int = Type("int", float);
+
+console.log("any = string?", typeCheck(any, string));
+console.log("string = any?", typeCheck(string, any));
+console.log("float = int?", typeCheck(float, int));
+console.log("int = float?", typeCheck(int, float));
