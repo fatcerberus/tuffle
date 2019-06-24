@@ -1,0 +1,37 @@
+/**
+ *  The simplest data type is, fittingly, 'data'.  Data types consist of one or more identifiers,
+ *  called constructors, followed by zero or more type expressions specifying the kind of data a
+ *  value with that tag carries.  The overall type can be defined recursively (i.e. in terms of
+ *  itself).  Droste types are allowed but can only safely be constructed by a lazy function!
+ *
+ *  Data types have pass-by-value semantics: assignment makes a copy of the data.  Note that
+ *  the individual constructors are not types themselves; they are more like operators that provide
+ *  a way to construct literal values of the type.
+**/
+
+data Maybe[+T] = nil | just T.
+data Result[+E, +T] = red E | green T.
+data Tree[+T] = leaf | node T, Tree[T], Tree[T].
+
+function inc(value: Maybe[int]): Maybe[int]
+{
+	// pattern matching!
+	return from value
+		: just [x] ? x + 1
+		: nil.
+}
+
+
+/**
+ *  If a type parameter isn't directly used in a tag, the resulting value will be universal
+ *  (i.e. it will work as a value for any instantiation of the type).  If that's not desired,
+ *  the type parameter can be forced to a specific type.  That can be useful because the type
+ *  arguments used to instantiate a type contribute to type checking even when not actually used.
+ */
+
+data Expr[+T] =
+	| litInt int => T = int
+	| litBool bool => T = bool
+	| eqExpr Expr<U>, Expr<U> => T = bool
+	| mulExpr Expr<int>, Expr<int> => T = int
+	| addExpr Expr<int>, Expr<int> => T = int.

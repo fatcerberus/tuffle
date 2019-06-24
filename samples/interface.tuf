@@ -1,0 +1,23 @@
+/**
+ *  'this' accepts optional type parameters, up to the number included in the interface definition.
+ *  The interface's type parameters unify with the implementing type, so we can say that some
+ *  generic type implementing the Functor trait, for example, "is a Functor in 'T'".
+**/
+
+interface Functor[+T]
+{
+	map[R](T -> R): this[R].
+}
+
+// `from` indicates that the interface derives from one or more others.  the implied interfaces
+// will be treated as though they were part of the definition of the implementing type.
+interface Monad[+T] from Functor[T]
+{
+	chain[R](T -> this[R]): this[R].
+}
+
+// interfaces don't have to be polymorphic.
+interface Show
+{
+	toString(): string.
+}

@@ -1,0 +1,16 @@
+/**
+ *  'struct' is just like 'struct' in other C-like languages.  it consists of one or more named
+ *  members, each carrying data of a specified type.  like data types, struct types are passed by
+ *  value.
+**/
+
+data PetType = dog | cat | pig.  // that last one will probably eat you.
+
+struct Farm
+{
+	family: Tree[Person].
+	numHogs: int.
+	numCows: int.
+	numChickens: int.
+	pet: PetType.
+}

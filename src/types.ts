@@ -76,11 +76,11 @@ function typeCheck(target: Type, source: Type): boolean
 			const sourceArg = source.args[i];
 			const targetArg = target.args[i];
 
-			// '<*>' as source is always compatible
+			// universal type argument '*': can be used with any instantiation
 			if (sourceArg === null)
 				continue;
 
-			// note: '<*> = <*>' handled by above clause
+			// note: '*' on both sides is covered by the above clause
 			if (targetArg === null)
 				return false;
 
