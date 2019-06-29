@@ -26,6 +26,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+type TypeArg =
+	| { kind: 'type', type: Type }
+	| { kind: 'star' }
+	| { kind: 'question' };
+
 interface TypeParam
 {
 	name: string;
@@ -37,7 +42,7 @@ interface Type
 	name: string;
 	baseType: Type | null;
 	typeVars: TypeParam[];
-	args: (Type | null)[];
+	args: TypeArg[];
 }
 
 export
@@ -52,19 +57,28 @@ function Type(name: string, baseType?: Type): Type
 }
 
 export
-function sameType(typeA: Type, typeB: Type)
+function sameType(a: Type, b: Type)
 {
-	if (typeA.name === typeB.name) {
+	if (a.name === b.name) {
 		// types have the same name; check if arguments match
-		for (let i = 0; i < typeA.args.length; ++i) {
-			const argA = typeA.args[i];
-			const argB = typeB.args[i];
-			if (!sameType(argA, argB))
+		for (let i = 0; i < a.args.length; ++i) {
+			const argA = a.args[i];
+			const argB = b.args[i];
+			if (!sameTypeArg(argA, argB))
 				return false;
 		}
 		return true;
 	}
 	return false;
+}
+
+export
+function sameTypeArg(a: TypeArg, b: TypeArg)
+{
+	if (a.kind === 'type' && b.kind === 'type')
+		return sameType(a.type, b.type);
+	else
+		return a.kind === b.kind;
 }
 
 export
@@ -76,25 +90,26 @@ function typeCheck(target: Type, source: Type): boolean
 			const sourceArg = source.args[i];
 			const targetArg = target.args[i];
 
-			// universal type argument '*': can be used with any instantiation
-			if (sourceArg === null)
+			// '[*]' is a universal value; '[?]' is a universal variable
+			if (sourceArg.kind === 'star' || targetArg.kind === 'question')
 				continue;
 
-			// note: '*' on both sides is covered by the above clause
-			if (targetArg === null)
+			// - target '[*]' can only receive another '[*]'
+			// - source '[?]' can only supply another '[?]'
+			if (targetArg.kind === 'star' || sourceArg.kind === 'question')
 				return false;
 
 			switch (target.typeVars[i].variance) {
 				case 'none':
-					if (!sameType(targetArg, sourceArg))
+					if (!sameType(targetArg.type, sourceArg.type))
 						return false;
 					break;
 				case 'co':
-					if (!typeCheck(sourceArg, targetArg))
+					if (!typeCheck(sourceArg.type, targetArg.type))
 						return false;
 					break;
 				case 'contra':
-					if (!typeCheck(targetArg, sourceArg))
+					if (!typeCheck(targetArg.type, sourceArg.type))
 						return false;
 					break;
 			}
