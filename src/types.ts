@@ -31,36 +31,52 @@ type TypeArg =
 	| { kind: 'star' }
 	| { kind: 'question' };
 
+interface Template
+{
+	name: string;
+	parameters: TypeParam[];
+	bases: {
+		template: Template;
+		paramMap: number[];
+	}[];
+}
+
+interface Type
+{
+	template: Template;
+	baseTypes: Type[];
+	args: TypeArg[];
+}
+
 interface TypeParam
 {
 	name: string;
 	variance: 'co' | 'contra' | 'none';
 }
 
-interface Type
-{
-	name: string;
-	baseType: Type | null;
-	typeVars: TypeParam[];
-	args: TypeArg[];
-}
-
 export
-function Type(name: string, baseType?: Type): Type
+function instantiate(template: Template, args: TypeArg[])
 {
-	return {
-		name,
-		baseType: baseType || null,
-		typeVars: [],
-		args: [],
+	const baseTypes: Type[] = [];
+	for (const base of template.bases) {
+		const baseArgs: TypeArg[] = [];
+		for (const index of base.paramMap)
+			baseArgs.push(args[index]);
+		baseTypes.push(instantiate(base.template, baseArgs));
+	}
+	const type: Type = {
+		template,
+		baseTypes,
+		args: [ ...args ],
 	};
+	return type;
 }
 
 export
 function sameType(a: Type, b: Type)
 {
-	if (a.name === b.name) {
-		// types have the same name; check if arguments match
+	if (sameTemplate(a.template, b.template)) {
+		// same type constructor, check if arguments match
 		for (let i = 0; i < a.args.length; ++i) {
 			const argA = a.args[i];
 			const argB = b.args[i];
@@ -73,20 +89,12 @@ function sameType(a: Type, b: Type)
 }
 
 export
-function sameTypeArg(a: TypeArg, b: TypeArg)
-{
-	if (a.kind === 'type' && b.kind === 'type')
-		return sameType(a.type, b.type);
-	else
-		return a.kind === b.kind;
-}
-
-export
 function typeCheck(target: Type, source: Type): boolean
 {
-	if (target.name === source.name) {
+	if (sameTemplate(target.template, source.template)) {
 		// types have the same type constructor; check if instantiations are compatible
-		for (let i = 0; i < source.typeVars.length; ++i) {
+		const parameters = source.template.parameters;
+		for (let i = 0, len = parameters.length; i < len; ++i) {
 			const sourceArg = source.args[i];
 			const targetArg = target.args[i];
 
@@ -99,7 +107,7 @@ function typeCheck(target: Type, source: Type): boolean
 			if (targetArg.kind === 'star' || sourceArg.kind === 'question')
 				return false;
 
-			switch (target.typeVars[i].variance) {
+			switch (parameters[i].variance) {
 				case 'none':
 					if (!sameType(targetArg.type, sourceArg.type))
 						return false;
@@ -116,11 +124,27 @@ function typeCheck(target: Type, source: Type): boolean
 		}
 		return true;
 	}
-	else if (source.baseType !== null) {
+	else {
 		// check if we inherit from something compatible
-		return typeCheck(source.baseType, target);
+		for (let i = 0, len = source.baseTypes.length; i < len; ++i) {
+			if (typeCheck(source.baseTypes[i], target))
+				return true;
+		}
 	}
 
-	// guess the types aren't compatible after all
+	// looks like the types aren't compatible after all...
 	return false;
+}
+
+function sameTemplate(a: Template, b: Template)
+{
+	return a.name === b.name;
+}
+
+function sameTypeArg(a: TypeArg, b: TypeArg)
+{
+	if (a.kind === 'type' && b.kind === 'type')
+		return sameType(a.type, b.type);
+	else
+		return a.kind === b.kind;
 }
