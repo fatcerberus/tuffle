@@ -26,14 +26,31 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import { Type, typeCheck } from './types';
+import { mkType, typeCheck, typeName, Type } from './types';
 
-const any = Type("any");
-const string = Type("string", any);
-const float = Type("float", any);
-const int = Type("int", float);
+const anyType = mkType("any");
+const stringType = mkType("string", anyType);
+const floatType = mkType("float", anyType);
+const intType = mkType("int", floatType);
 
-console.log("any = string?", typeCheck(any, string));
-console.log("string = any?", typeCheck(string, any));
-console.log("float = int?", typeCheck(float, int));
-console.log("int = float?", typeCheck(int, float));
+const scope = new Map<string, Type>([
+	[ 'foo', intType ],
+	[ 'bar', stringType ],
+]);
+
+const ast = [
+	{ type: 'assign', lhs: 'foo', rhs: 'bar' },
+];
+
+for (const node of ast) {
+	switch (node.type) {
+		case 'assign':
+			const lhs = node.lhs;
+			const rhs = node.rhs;
+			const tgtType = scope.get(lhs)!;
+			const srcType = scope.get(rhs)!;
+			if (!typeCheck(tgtType, srcType))
+				console.log(`[tuf9001]: value of type '${typeName(srcType)}' cannot act as type '${typeName(tgtType)}'`);
+			break;
+	}
+}

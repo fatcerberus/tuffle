@@ -41,6 +41,7 @@ interface Template
 	}[];
 }
 
+export
 interface Type
 {
 	template: Template;
@@ -52,6 +53,22 @@ interface TypeParam
 {
 	name: string;
 	variance: 'co' | 'contra' | 'none';
+}
+
+export
+function mkType(name: string, baseType?: Type)
+{
+	const template: Template = {
+		name,
+		parameters: [],
+		bases: [],
+	};
+	if (baseType !== undefined) {
+		template.bases = [
+			{ template: baseType.template, paramMap: [] },
+		];
+	}
+	return instantiate(template, []);
 }
 
 export
@@ -98,7 +115,7 @@ function typeCheck(target: Type, source: Type): boolean
 			const sourceArg = source.args[i];
 			const targetArg = target.args[i];
 
-			// '[*]' is a universal value; '[?]' is a universal variable
+			// '[*]' is a universal value; '[?]' is a universal receiver
 			if (sourceArg.kind === 'star' || targetArg.kind === 'question')
 				continue;
 
@@ -126,14 +143,20 @@ function typeCheck(target: Type, source: Type): boolean
 	}
 	else {
 		// check if we inherit from something compatible
-		for (let i = 0, len = source.baseTypes.length; i < len; ++i) {
-			if (typeCheck(source.baseTypes[i], target))
+		for (const baseType of source.baseTypes) {
+			if (typeCheck(baseType, target))
 				return true;
 		}
 	}
 
 	// looks like the types aren't compatible after all...
 	return false;
+}
+
+export
+function typeName(type: Type)
+{
+	return type.template.name;
 }
 
 function sameTemplate(a: Template, b: Template)
