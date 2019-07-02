@@ -28,6 +28,26 @@
 
 import { mkType, typeCheck, typeName, Type } from './types';
 
+type Node =
+	| { type: 'identifier', name: string }
+	| { type: 'assignment', lhs: Node, rhs: Node }
+	| { type: 'call', target: Node, args: Node[] };
+
+function Identifier(name: string): Node
+{
+	return { type: 'identifier', name };
+}
+
+function Assignment(lhs: Node, rhs: Node): Node
+{
+	return { type: 'assignment', lhs, rhs };
+}
+
+function Call(target: Node, args: Node[]): Node
+{
+	return { type: 'call', target, args };
+}
+
 const anyType = mkType("any");
 const stringType = mkType("string", anyType);
 const floatType = mkType("float", anyType);
@@ -39,21 +59,37 @@ const scope = new Map<string, Type>([
 	[ 'ape', floatType ],
 ]);
 
-const ast = [
-	{ type: 'assign', lhs: 'pig', rhs: 'cow' },
-	{ type: 'assign', lhs: 'cow', rhs: 'ape' },
-	{ type: 'assign', lhs: 'ape', rhs: 'pig' },
+const program: Node[] = [
+	Assignment(Call(Identifier('pig'), []), Identifier('cow')),
+	Call(Identifier('whale'), [ Identifier('ape') ])
 ];
 
-for (const node of ast) {
+for (const node of program) {
 	switch (node.type) {
-		case 'assign':
-			const lhs = node.lhs;
-			const rhs = node.rhs;
+		case 'assignment':
+			const lhs = identifierOf(node.lhs)!;
+			const rhs = identifierOf(node.rhs)!;
 			const tgtType = scope.get(lhs)!;
 			const srcType = scope.get(rhs)!;
 			if (!typeCheck(tgtType, srcType))
-				console.log(`[tuf9001]: '${lhs} = ${rhs}': value of type '${typeName(srcType)}' cannot act as type '${typeName(tgtType)}'`);
+				error(node, 9001, `value of type '${typeName(srcType)}' cannot act as type '${typeName(tgtType)}'`);
+			break;
+		case 'call':
+
 			break;
 	}
+}
+
+function identifierOf(node: Node): string | null
+{
+	if (node.type !== 'identifier') {
+		error(node, 9002, `expected an identifier here`);
+		return null;
+	}
+	return node.name;
+}
+
+function error(at: Node, code: number, message: string)
+{
+	console.log(`[tuf${code}]: '${at.type}': ${message}`);
 }
