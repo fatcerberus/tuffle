@@ -5,6 +5,7 @@
 		"module": "commonjs",
 		"lib": [ "es2015" ],
 		"outDir": "dist",
+		"sourceMap": true,
 		"strict": true,
 	}
 }

@@ -34,12 +34,15 @@ const floatType = mkType("float", anyType);
 const intType = mkType("int", floatType);
 
 const scope = new Map<string, Type>([
-	[ 'foo', intType ],
-	[ 'bar', stringType ],
+	[ 'pig', stringType ],
+	[ 'cow', intType ],
+	[ 'ape', floatType ],
 ]);
 
 const ast = [
-	{ type: 'assign', lhs: 'foo', rhs: 'bar' },
+	{ type: 'assign', lhs: 'pig', rhs: 'cow' },
+	{ type: 'assign', lhs: 'cow', rhs: 'ape' },
+	{ type: 'assign', lhs: 'ape', rhs: 'pig' },
 ];
 
 for (const node of ast) {
@@ -50,7 +53,7 @@ for (const node of ast) {
 			const tgtType = scope.get(lhs)!;
 			const srcType = scope.get(rhs)!;
 			if (!typeCheck(tgtType, srcType))
-				console.log(`[tuf9001]: value of type '${typeName(srcType)}' cannot act as type '${typeName(tgtType)}'`);
+				console.log(`[tuf9001]: '${lhs} = ${rhs}': value of type '${typeName(srcType)}' cannot act as type '${typeName(tgtType)}'`);
 			break;
 	}
 }

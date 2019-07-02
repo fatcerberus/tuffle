@@ -144,7 +144,7 @@ function typeCheck(target: Type, source: Type): boolean
 	else {
 		// check if we inherit from something compatible
 		for (const baseType of source.baseTypes) {
-			if (typeCheck(baseType, target))
+			if (typeCheck(target, baseType))
 				return true;
 		}
 	}
