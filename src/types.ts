@@ -31,13 +31,18 @@ type TypeArg =
 	| { kind: 'star' }
 	| { kind: 'question' };
 
+type TemplateArg =
+	| TypeArg
+	| { kind: 'index', index: number };
+
+export
 interface Template
 {
 	name: string;
 	parameters: TypeParam[];
 	bases: {
 		template: Template;
-		paramMap: number[];
+		args: TemplateArg[];
 	}[];
 }
 
@@ -52,9 +57,21 @@ interface Type
 interface TypeParam
 {
 	name: string;
-	variance: 'co' | 'contra' | 'none';
+	variance: 'none' | 'covariant' | 'contra';
 }
 
+export
+function mkTemplate(name: string, baseType: Type, parameters: TypeParam[])
+{
+	const template: Template = {
+		name,
+		parameters: [ ...parameters ],
+		bases: [
+			{ template: baseType.template, args: [] },
+		],
+	};
+	return template;
+}
 export
 function mkType(name: string, baseType?: Type)
 {
@@ -65,28 +82,37 @@ function mkType(name: string, baseType?: Type)
 	};
 	if (baseType !== undefined) {
 		template.bases = [
-			{ template: baseType.template, paramMap: [] },
+			{ template: baseType.template, args: [] },
 		];
 	}
 	return instantiate(template, []);
 }
 
 export
-function instantiate(template: Template, args: TypeArg[])
+function instantiate(ctor: Template, args: TypeArg[])
 {
 	const baseTypes: Type[] = [];
-	for (const base of template.bases) {
+	for (const base of ctor.bases) {
 		const baseArgs: TypeArg[] = [];
-		for (const index of base.paramMap)
-			baseArgs.push(args[index]);
+		for (const baseArg of base.args) {
+			if (baseArg.kind === 'index')
+				baseArgs.push(args[baseArg.index]);
+			else
+				baseArgs.push(baseArg);
+		}
 		baseTypes.push(instantiate(base.template, baseArgs));
 	}
 	const type: Type = {
-		template,
+		template: ctor,
 		baseTypes,
 		args: [ ...args ],
 	};
 	return type;
+}
+
+function sameTemplate(a: Template, b: Template)
+{
+	return a.name === b.name;
 }
 
 export
@@ -105,6 +131,14 @@ function sameType(a: Type, b: Type)
 	return false;
 }
 
+function sameTypeArg(a: TypeArg, b: TypeArg)
+{
+	if (a.kind === 'type' && b.kind === 'type')
+		return sameType(a.type, b.type);
+	else
+		return a.kind === b.kind;
+}
+
 export
 function typeCheck(target: Type, source: Type): boolean
 {
@@ -115,21 +149,21 @@ function typeCheck(target: Type, source: Type): boolean
 			const sourceArg = source.args[i];
 			const targetArg = target.args[i];
 
-			// '[*]' is a universal value; '[?]' is a universal receiver
+			// '*' is a universal value, '?' is a universal receiver
 			if (sourceArg.kind === 'star' || targetArg.kind === 'question')
 				continue;
 
-			// - target '[*]' can only receive another '[*]'
-			// - source '[?]' can only supply another '[?]'
+			// as a target, '*' can only receive another '*'
+			// as a source, '?' can only be assigned to another '?'
 			if (targetArg.kind === 'star' || sourceArg.kind === 'question')
 				return false;
 
 			switch (parameters[i].variance) {
-				case 'none':
+				case 'none':  // totally invariant
 					if (!sameType(targetArg.type, sourceArg.type))
 						return false;
 					break;
-				case 'co':
+				case 'covariant':
 					if (!typeCheck(sourceArg.type, targetArg.type))
 						return false;
 					break;
@@ -153,21 +187,25 @@ function typeCheck(target: Type, source: Type): boolean
 	return false;
 }
 
+function typeArgName(arg: TypeArg)
+{
+	return arg.kind === 'star' ? "*"
+		: arg.kind === 'question' ? "?"
+		: typeName(arg.type);
+}
+
 export
 function typeName(type: Type)
 {
-	return type.template.name;
-}
-
-function sameTemplate(a: Template, b: Template)
-{
-	return a.name === b.name;
-}
-
-function sameTypeArg(a: TypeArg, b: TypeArg)
-{
-	if (a.kind === 'type' && b.kind === 'type')
-		return sameType(a.type, b.type);
-	else
-		return a.kind === b.kind;
+	let name = type.template.name;
+	if (type.args.length > 0) {
+		name += "[";
+		for (let i = 0; i < type.args.length; ++i) {
+			if (i > 0)
+				name += ",";
+			name += typeArgName(type.args[i]);
+		}
+		name += "]";
+	}
+	return name;
 }

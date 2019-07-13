@@ -26,7 +26,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import { mkType, typeCheck, typeName, Type } from './types';
+import { instantiate, mkTemplate, mkType, typeCheck, typeName, Type } from './types';
 
 type Node =
 	| { type: 'identifier', name: string }
@@ -49,18 +49,26 @@ function Call(target: Node, args: Node[]): Node
 }
 
 const anyType = mkType("any");
+const functionType = mkTemplate("Function", anyType, [
+	{ name: "T", variance: 'contra' },
+	{ name: "R", variance: 'covariant' },
+]);
 const stringType = mkType("string", anyType);
 const floatType = mkType("float", anyType);
 const intType = mkType("int", floatType);
+const intFunType = instantiate(functionType, [
+	{ kind: 'type', type: intType },
+	{ kind: 'type', type: stringType },
+]);
 
-const scope = new Map<string, Type>([
-	[ 'pig', stringType ],
+const scope = new Map([
+	[ 'pig', intFunType ],
 	[ 'cow', intType ],
 	[ 'ape', floatType ],
 ]);
 
 const program: Node[] = [
-	Assignment(Call(Identifier('pig'), []), Identifier('cow')),
+	Assignment(Identifier('pig'), Identifier('cow')),
 	Call(Identifier('whale'), [ Identifier('ape') ])
 ];
 
