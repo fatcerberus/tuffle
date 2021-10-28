@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "The Tuffle programming language",
   "main": "dist/main.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,7 +14,7 @@
   "author": "Fat Cerberus",
   "license": "BSD-2-Clause",
   "devDependencies": {
-    "@types/node": "^12.0.10",
-    "typescript": "^3.5.2"
+    "@types/node": "^16.11.6",
+    "typescript": "^4.4.4"
   }
 }

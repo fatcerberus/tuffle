@@ -26,7 +26,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import { instantiate, mkTemplate, mkType, typeCheck, typeName, Type } from './types';
+import { instantiate, mkTemplate, mkType, typeCheck, typeName, Type } from './types.js';
 
 type Node =
 	| { type: 'identifier', name: string }
